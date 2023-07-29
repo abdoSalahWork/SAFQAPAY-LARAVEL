@@ -1,0 +1,92 @@
+name: Laravel Github action
+on:
+  push:
+    branches:
+      - main
+
+
+env:
+  SERVER_IP: ${{ secrets.SSH_HOST }}
+  SERVER_PORT: 22
+  SERVER_USERNAME: ${{ secrets.SSH_USERNAME }}
+  SERVER_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+
+jobs:
+  laravel-tests:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        operating-system: [ubuntu-latest]
+        php-versions: [ '8.1.13' ]
+        dependency-stability: [ 'prefer-none' ]
+
+    name: P${{ matrix.php-versions }} - L${{ matrix.laravel }} - ${{ matrix.dependency-stability }} - ${{ matrix.operating-system}}
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install PHP versions
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ matrix.php-versions }}
+    - name: Get Composer Cache Directory 2
+      id: composer-cache
+      run: |
+        echo "::set-output name=dir::$(composer config cache-files-dir)"
+    - uses: actions/cache@v2
+      id: actions-cache
+      with:
+        path: ${{ steps.composer-cache.outputs.dir }}
+        key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-composer-
+    - name: Cache PHP dependencies
+      uses: actions/cache@v2
+      id: vendor-cache
+      with:
+        path: vendor
+        key: ${{ runner.OS }}-build-${{ hashFiles('**/composer.lock') }}
+    - name: Install Dependencies
+      if: steps.vendor-cache.outputs.cache-hit != 'true'
+      run: composer install -q --ignore-platform-reqs --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+    - name: Update Dependencies with latest stable
+      if: matrix.dependency-stability == 'prefer-stable'
+      run: composer update --prefer-stable
+    - name: Update Dependencies with lowest stable
+      if: matrix.dependency-stability == 'prefer-lowest'
+      run: composer update --prefer-stable --prefer-lowest
+
+    - name: Update Dependencies with lowest stable
+      run: composer update
+
+    - name: Show dir
+      run: pwd
+    - name: PHP Version
+      run: php --version
+    - name: List files
+      run: ls -ls
+
+    - name: Copy the build directory to server
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{secrets.SSH_HOST}} # IP address of the server you wish to ssh into
+        username: ${{secrets.SSH_USERNAME}} # User of the server you want to ssh into
+        password: ${{secrets.SSH_PASSWORD}}
+        source: ./
+        target: /www//wwwroot/safqa_backend
+    # - name: migrate
+    #   uses: appleboy/ssh-action@v0.1.2
+    #   with:
+    #     host: ${{secrets.SSH_HOST}} # IP address of the server you wish to ssh into
+    #     username: ${{secrets.SSH_USERNAME}} # User of the server you want to ssh into
+    #     password: ${{secrets.SSH_PASSWORpD}}
+    #     script: |
+    #       cd /www/wwwroot/safqa_backend
+    #       yes | php artisan migrate
+    #       chmod -R 775 storage bootstrap/cache
+    #       chmod o+w ./storage/ -R
+# --seed
+#test deploy
+#test deploy after change privilages
+#test after edit .env

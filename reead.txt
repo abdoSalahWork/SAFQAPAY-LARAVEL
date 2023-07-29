@@ -1,0 +1,19 @@
+x = [
+app,
+config,
+database,
+public,
+resources,
+routes,
+]
+git pull ---> safqa salah
+copy x from safqa salah
+
+delete x from safqa
+past to safqa
+php artisan migrate:fresh
+php artisan db:seed --class=InstallSeeder
+
+
+
+-----------------------

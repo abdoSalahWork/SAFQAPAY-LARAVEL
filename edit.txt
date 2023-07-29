@@ -1,0 +1,14 @@
+creat admin country -> route,frontend
+
+invoice_option_id -----> Send Invoice Option
+
+customer mobile code
+Display Currency - currency Id
+Recurring Interval --- duplicate invoice -- model-additional-seeder
+Recurring start and end date
+terms_and_conditions - enable  ----
+min_invoice,max_invoice ???
+
+
+is_open_invoice , discount_type ---- default boolean
+
